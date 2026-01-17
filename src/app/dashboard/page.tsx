@@ -2,6 +2,9 @@ import { getSession } from "@/lib/auth";
 import { getExpedientes } from './actions';
 import CasesTable from '@/components/CasesTable';
 
+// Esta línea evita que Next.js intente conectar a la DB en el build
+export const dynamic = "force-dynamic";
+
 export default async function DashboardHome() {
     const cases = await getExpedientes();
     const session = await getSession();
@@ -21,7 +24,6 @@ export default async function DashboardHome() {
     return (
         <div className="flex flex-col gap-8 animate-fade-in-up">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Tarjetas de Estadísticas (Manteniendo estilo anterior pero con datos reales/simulados) */}
                 <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
                     <span className="text-sm font-bold text-blue-500 uppercase tracking-wider">Total Casos</span>
                     <span className="block text-4xl font-extrabold text-blue-700 mt-2">{totalCasos}</span>
