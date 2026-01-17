@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Expediente {
+  id               Int      @id @default(autoincrement())
+  numeroExpediente String   @unique // Formato: EXP-YYYY-XXXX
+  
+  // Datos Estudiante
+  nombres          String
+  apellidos        String
+  cedula           String
+  sexo             String?
+  discapacidad     String?
+  telefono         String?
+  correo           String?
+  
+  // Datos Académicos
+  carrera          String?
+  semestre         String?
+  seccion          String?
+  periodo          String?
+  
+  // Ubicación
+  estado           String?
+  municipio        String?
+  parroquia        String?
+  direccion        String?
+  
+  // Detalles del Caso
+  tipoCaso         String
+  unidadCurricular String?
+  nombreProfesor   String?
+  telefonoProfesor String?
+  abogadoAsignado  String?
+  
+  // Gestión del Caso
+  estatus          String   @default("PENDIENTE") // PENDIENTE, APROBADO, NO APROBADO
+  fechaRegistro    DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  cedula    String   @unique
+  nombre    String
+  clave     String
+  role      String   @default("BASIC_USER") // SUPER_ADMIN, BASIC_USER
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

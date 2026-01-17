@@ -1,20 +1,26 @@
 'use client';
+
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaLock, FaUser } from 'react-icons/fa';
+import { login } from '@/app/login/actions';
+import { FaUser, FaLock, FaSpinner } from 'react-icons/fa';
 
-export default function Login() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
+export default function Home() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulación de login
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 1000);
+    setIsLoading(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await login(formData);
+
+    if (result?.error) {
+      setError(result.error);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,39 +42,47 @@ export default function Login() {
           <p className="text-slate-500 text-sm">Sistema de Gestión de Casos</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm flex items-center justify-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Usuario</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Cédula</label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-slate-400"><FaUser /></span>
+              <span className="absolute left-4 top-3 text-slate-400"><FaUser /></span>
               <input
+                name="cedula"
                 type="text"
                 required
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                placeholder="Ingrese su usuario"
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="Ingrese su cédula"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Contraseña</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Clave</label>
             <div className="relative">
-              <span className="absolute left-3 top-3 text-slate-400"><FaLock /></span>
+              <span className="absolute left-4 top-3 text-slate-400"><FaLock /></span>
               <input
+                name="clave"
                 type="password"
                 required
-                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all"
-                placeholder="••••••"
+                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="••••••••"
               />
             </div>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200 flex justify-center items-center shadow-md hover:shadow-lg"
+            disabled={isLoading}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
           >
-            {loading ? 'Ingresando...' : 'Iniciar Sesión'}
+            {isLoading ? <FaSpinner className="animate-spin" /> : 'INGRESAR'}
           </button>
         </form>
       </div>

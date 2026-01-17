@@ -1,9 +1,11 @@
 'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { FaPlusCircle, FaSearch, FaSignOutAlt, FaHome, FaBars, FaTimes } from 'react-icons/fa';
+import { logout } from '@/app/login/actions';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -64,8 +66,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             href={item.href}
                             onClick={closeSidebar} // Cierra el menú al hacer click en un enlace
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${pathname === item.href
-                                    ? 'bg-blue-50 text-blue-600 font-bold shadow-sm'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                ? 'bg-blue-50 text-blue-600 font-bold shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 }`}
                         >
                             <span className="text-lg">{item.icon}</span>
@@ -76,10 +78,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                 {/* Footer del Sidebar (Cerrar Sesión) */}
                 <div className="p-4 border-t border-slate-100">
-                    <Link href="/" className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium">
+                    <button
+                        onClick={() => logout()}
+                        className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-lg transition-colors font-medium w-full text-left"
+                    >
                         <FaSignOutAlt />
                         <span>Cerrar Sesión</span>
-                    </Link>
+                    </button>
                 </div>
             </aside>
 

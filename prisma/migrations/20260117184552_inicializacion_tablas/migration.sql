@@ -1,0 +1,31 @@
+-- CreateTable
+CREATE TABLE `Expediente` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `numeroExpediente` VARCHAR(191) NOT NULL,
+    `nombres` VARCHAR(191) NOT NULL,
+    `apellidos` VARCHAR(191) NOT NULL,
+    `cedula` VARCHAR(191) NOT NULL,
+    `sexo` VARCHAR(191) NULL,
+    `discapacidad` VARCHAR(191) NULL,
+    `telefono` VARCHAR(191) NULL,
+    `correo` VARCHAR(191) NULL,
+    `carrera` VARCHAR(191) NULL,
+    `semestre` VARCHAR(191) NULL,
+    `seccion` VARCHAR(191) NULL,
+    `periodo` VARCHAR(191) NULL,
+    `estado` VARCHAR(191) NULL,
+    `municipio` VARCHAR(191) NULL,
+    `parroquia` VARCHAR(191) NULL,
+    `direccion` VARCHAR(191) NULL,
+    `tipoCaso` VARCHAR(191) NOT NULL,
+    `unidadCurricular` VARCHAR(191) NULL,
+    `nombreProfesor` VARCHAR(191) NULL,
+    `telefonoProfesor` VARCHAR(191) NULL,
+    `abogadoAsignado` VARCHAR(191) NULL,
+    `estatus` VARCHAR(191) NOT NULL DEFAULT 'PENDIENTE',
+    `fechaRegistro` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    UNIQUE INDEX `Expediente_numeroExpediente_key`(`numeroExpediente`),
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
