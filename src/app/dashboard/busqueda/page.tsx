@@ -1,25 +1,43 @@
 'use client';
 
-import { useState } from 'react';
-import { FaSearch, FaFileAlt, FaUserGraduate, FaSpinner } from 'react-icons/fa';
-import { getExpedienteByNumber } from '../actions';
-import type { Expediente } from '@prisma/client';
+import { useState, useEffect } from 'react';
+import { FaSearch, FaSpinner } from 'react-icons/fa';
+import { searchExpedientes, getUserRole } from '../actions';
+import CasesTable from '@/components/CasesTable';
 
 export default function BusquedaPage() {
     const [query, setQuery] = useState('');
     const [hasSearched, setHasSearched] = useState(false);
-    const [result, setResult] = useState<Expediente | null>(null);
+    const [results, setResults] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [userRole, setUserRole] = useState('BASIC_USER');
+
+    // Generate a new key after every search so CasesTable remounts 
+    // and picks up the new initialCases since it uses useState internally
+    const [tableKey, setTableKey] = useState(Date.now().toString());
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            const role = await getUserRole();
+            if (role) setUserRole(role);
+        };
+        fetchRole();
+    }, []);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         setHasSearched(true);
         setIsLoading(true);
-        setResult(null);
 
         try {
-            const data = await getExpedienteByNumber(query);
-            setResult(data);
+            const data = await searchExpedientes(query);
+            const serialized = data.map((c: any) => ({
+                ...c,
+                fechaRegistro: c.fechaRegistro.toISOString(),
+                updatedAt: c.updatedAt.toISOString(),
+            }));
+            setResults(serialized);
+            setTableKey(Date.now().toString());
         } catch (error) {
             console.error(error);
         } finally {
@@ -28,13 +46,13 @@ export default function BusquedaPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
             <div className="text-center mb-10">
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">Búsqueda de Casos</h1>
-                <p className="text-slate-500">Ingrese el número de expediente (Ej. EXP-2026-ABCD)</p>
+                <p className="text-slate-500">Ingrese el número de expediente o la cédula del estudiante</p>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 mb-8">
+            <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 mb-8 max-w-4xl mx-auto">
                 <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 relative">
                         <span className="absolute left-4 top-3.5 text-slate-400">
@@ -42,7 +60,7 @@ export default function BusquedaPage() {
                         </span>
                         <input
                             type="text"
-                            placeholder="Ej. EXP-2026-XXXX"
+                            placeholder="Ej. EXP-2026-XXXX o Cédula"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg"
@@ -60,38 +78,9 @@ export default function BusquedaPage() {
             </div>
 
             {hasSearched && !isLoading && (
-                <div className="animate-fade-in-up">
-                    <h3 className="text-lg font-bold text-slate-700 mb-4 ml-1">Resultados de la búsqueda</h3>
-
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        {result ? (
-                            <div className="p-4 border-b border-slate-100 flex items-center justify-between hover:bg-slate-50 transition-colors cursor-pointer">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-blue-100 p-3 rounded-full text-blue-600">
-                                        <FaUserGraduate size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-800">{result.nombres} {result.apellidos}</h4>
-                                        <p className="text-sm text-slate-500">{result.numeroExpediente}</p>
-                                        <p className="text-xs text-slate-400">Cedula: {result.cedula}</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-1
-                                        ${result.estatus === 'APROBADO' ? 'bg-green-100 text-green-700' :
-                                            result.estatus === 'NO APROBADO' ? 'bg-red-100 text-red-700' :
-                                                'bg-yellow-100 text-yellow-700'}`}>
-                                        {result.estatus}
-                                    </span>
-                                    <p className="text-xs text-slate-400">Caso: {result.tipoCaso}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="p-8 text-center text-slate-500">
-                                No se encontraron casos con ese número de expediente.
-                            </div>
-                        )}
-                    </div>
+                <div className="animate-fade-in-up space-y-4">
+                    <h3 className="text-lg font-bold text-slate-700 mb-4 ml-1">Resultados de la búsqueda: {results.length} encontrado(s)</h3>
+                    <CasesTable key={tableKey} initialCases={results} userRole={userRole} totalPages={1} />
                 </div>
             )}
         </div>

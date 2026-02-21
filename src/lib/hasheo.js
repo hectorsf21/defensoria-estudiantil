@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 
 // Cambia 'tu_contraseña_aqui' por la clave que quieras usar
-const passwordOriginal = '77812345';
+const passwordOriginal = '30291516';
 
 const saltRounds = 10; // Nivel de seguridad (10 es el estándar)
 

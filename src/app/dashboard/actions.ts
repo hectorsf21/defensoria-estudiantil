@@ -59,6 +59,27 @@ export async function createExpediente(data: FormData) {
     return { success: true, numeroExpediente: newExpediente.numeroExpediente };
 }
 
+export async function getExpedientesPaginated(page: number, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const [expedientes, total] = await Promise.all([
+        prisma.expediente.findMany({
+            skip,
+            take: limit,
+            orderBy: { fechaRegistro: 'desc' },
+        }),
+        prisma.expediente.count()
+    ]);
+    return { expedientes, total, totalPages: Math.ceil(total / limit) };
+}
+
+export async function getDashboardStats() {
+    const totalCasos = await prisma.expediente.count();
+    const resueltos = await prisma.expediente.count({
+        where: { estatus: { in: ['CERRADO', 'APROBADO'] } }
+    });
+    return { totalCasos, resueltos };
+}
+
 export async function getExpedientes() {
     const expedientes = await prisma.expediente.findMany({
         orderBy: { fechaRegistro: 'desc' },
@@ -71,6 +92,19 @@ export async function getExpedienteByNumber(numero: string) {
         where: { numeroExpediente: numero },
     });
     return expediente;
+}
+
+export async function searchExpedientes(query: string) {
+    const expedientes = await prisma.expediente.findMany({
+        where: {
+            OR: [
+                { numeroExpediente: { contains: query } },
+                { cedula: { contains: query } }
+            ]
+        },
+        orderBy: { fechaRegistro: 'desc' },
+    });
+    return expedientes;
 }
 
 import { getSession } from '@/lib/auth';

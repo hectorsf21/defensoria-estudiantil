@@ -1,25 +1,22 @@
 import { getSession } from "@/lib/auth";
-import { getExpedientes } from './actions';
+import { getExpedientesPaginated, getDashboardStats } from './actions';
 import CasesTable from '@/components/CasesTable';
 
 // Esta línea evita que Next.js intente conectar a la DB en el build
 export const dynamic = "force-dynamic";
 
 export default async function DashboardHome() {
-    const cases = await getExpedientes();
+    const { expedientes, totalPages } = await getExpedientesPaginated(1, 10);
+    const { totalCasos, resueltos } = await getDashboardStats();
     const session = await getSession();
     const userRole = session?.role || 'BASIC_USER';
 
     // Serialize dates for Client Component
-    const serializedCases = cases.map(c => ({
+    const serializedCases = expedientes.map(c => ({
         ...c,
         fechaRegistro: c.fechaRegistro.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
     }));
-
-    // Calculate simple stats from real data
-    const totalCasos = cases.length;
-    const resueltos = cases.filter(c => c.estatus === 'CERRADO' || c.estatus === 'APROBADO').length;
 
     return (
         <div className="flex flex-col gap-8 animate-fade-in-up">
@@ -38,7 +35,7 @@ export default async function DashboardHome() {
 
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold text-slate-800">Listado de Expedientes</h2>
-                <CasesTable initialCases={serializedCases} userRole={userRole} />
+                <CasesTable initialCases={serializedCases} userRole={userRole} totalPages={totalPages} />
             </div>
         </div>
     );
