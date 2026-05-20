@@ -2,6 +2,25 @@
 
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
+
+// Helper function to save uploaded file
+async function saveUploadedFile(file: File, prefix: string): Promise<string> {
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    // Make sure public/uploads folder exists
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads');
+    await mkdir(uploadDir, { recursive: true });
+
+    // Clean up filename and make it unique
+    const cleanFileName = `${Date.now()}-${prefix}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    const filePath = path.join(uploadDir, cleanFileName);
+    await writeFile(filePath, buffer);
+
+    return `/uploads/${cleanFileName}`;
+}
 
 export async function getUserRole() {
     const session = await getSession();
@@ -28,6 +47,17 @@ export async function createExpediente(data: FormData) {
         estatus = (data.get('estatus') as string) || 'EN PROCESO';
     }
 
+    // Process uploaded student support file
+    let soporteEstudiantePath: string | null = null;
+    const soporteFile = data.get('soporte') as File | null;
+    if (soporteFile && soporteFile instanceof File && soporteFile.size > 0) {
+        try {
+            soporteEstudiantePath = await saveUploadedFile(soporteFile, 'soporte');
+        } catch (error) {
+            console.error('Error saving student support file:', error);
+        }
+    }
+
     const newExpediente = await prisma.expediente.create({
         data: {
             numeroExpediente,
@@ -52,6 +82,7 @@ export async function createExpediente(data: FormData) {
             telefonoProfesor: data.get('telefono_profesor') as string,
             abogadoAsignado: data.get('abogado') as string,
             estatus: estatus,
+            soporteEstudiante: soporteEstudiantePath,
         },
     });
 
@@ -99,7 +130,10 @@ export async function searchExpedientes(query: string) {
         where: {
             OR: [
                 { numeroExpediente: { contains: query } },
-                { cedula: { contains: query } }
+                { cedula: { contains: query } },
+                { abogadoAsignado: { contains: query } },
+                { nombres: { contains: query } },
+                { apellidos: { contains: query } }
             ]
         },
         orderBy: { fechaRegistro: 'desc' },
@@ -120,4 +154,34 @@ export async function approveExpediente(id: number) {
         data: { estatus: 'APROBADO' },
     });
     revalidatePath('/dashboard');
+}
+
+export async function uploadRespuestaSolicitud(expedienteId: number, data: FormData) {
+    const session = await getSession();
+    if (session?.role !== 'SUPER_ADMIN') {
+        throw new Error('Unauthorized');
+    }
+
+    const respuestaFile = data.get('respuesta') as File | null;
+    if (!respuestaFile || !(respuestaFile instanceof File) || respuestaFile.size === 0) {
+        return { error: 'No se ha proporcionado un archivo válido' };
+    }
+
+    try {
+        const respuestaPath = await saveUploadedFile(respuestaFile, 'respuesta');
+
+        const updated = await prisma.expediente.update({
+            where: { id: expedienteId },
+            data: { 
+                respuestaSolicitud: respuestaPath,
+                estatus: 'APROBADO'
+            },
+        });
+
+        revalidatePath('/dashboard');
+        return { success: true, respuestaSolicitud: updated.respuestaSolicitud };
+    } catch (error) {
+        console.error('Error uploading response:', error);
+        return { error: 'Error al procesar el archivo de respuesta' };
+    }
 }

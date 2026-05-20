@@ -49,18 +49,18 @@ export default function BusquedaPage() {
         <div className="max-w-6xl mx-auto">
             <div className="text-center mb-10">
                 <h1 className="text-3xl font-bold text-slate-800 mb-2">Búsqueda de Casos</h1>
-                <p className="text-slate-500">Ingrese el número de expediente o la cédula del estudiante</p>
+                <p className="text-slate-500">Ingrese el número de expediente, cédula, nombre del estudiante o del abogado</p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 mb-8 max-w-4xl mx-auto">
                 <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 relative">
                         <span className="absolute left-4 top-3.5 text-slate-400">
-                            <FaSearch />
+                             <FaSearch />
                         </span>
                         <input
                             type="text"
-                            placeholder="Ej. EXP-2026-XXXX o Cédula"
+                            placeholder="Ej. Cédula, Nombre del estudiante, Abogado o EXP-2026-XXXX"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-lg"

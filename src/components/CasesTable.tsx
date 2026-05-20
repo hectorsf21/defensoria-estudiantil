@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { approveExpediente, getExpedientesPaginated } from '@/app/dashboard/actions';
-import { FaCheck, FaTimes, FaSpinner, FaEye } from 'react-icons/fa';
+import { approveExpediente, getExpedientesPaginated, uploadRespuestaSolicitud } from '@/app/dashboard/actions';
+import { FaCheck, FaTimes, FaSpinner, FaEye, FaDownload, FaUpload } from 'react-icons/fa';
 
 export interface Expediente {
     id: number;
@@ -19,6 +19,8 @@ export interface Expediente {
     carrera?: string | null;
     tipoCaso?: string | null;
     direccion?: string | null;
+    soporteEstudiante?: string | null;
+    respuestaSolicitud?: string | null;
 }
 
 export default function CasesTable({ initialCases, userRole, totalPages: initialTotalPages }: { initialCases: any[], userRole: string, totalPages: number }) {
@@ -28,6 +30,37 @@ export default function CasesTable({ initialCases, userRole, totalPages: initial
     const [totalPages, setTotalPages] = useState(initialTotalPages);
     const [loadingPage, setLoadingPage] = useState(false);
     const [selectedCase, setSelectedCase] = useState<any | null>(null);
+    const [uploadingRespuesta, setUploadingRespuesta] = useState(false);
+
+    const handleRespuestaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+        setUploadingRespuesta(true);
+
+        const formData = new FormData();
+        formData.append('respuesta', file);
+
+        try {
+            const res = await uploadRespuestaSolicitud(selectedCase.id, formData);
+            if (res.error) {
+                alert(res.error);
+            } else if (res.success && res.respuestaSolicitud) {
+                const updatedCase = { 
+                    ...selectedCase, 
+                    respuestaSolicitud: res.respuestaSolicitud,
+                    estatus: 'APROBADO' 
+                };
+                setSelectedCase(updatedCase);
+                setCases(cases.map(c => c.id === selectedCase.id ? updatedCase : c));
+                alert('¡Respuesta oficial subida y expediente aprobado exitosamente!');
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Error inesperado al subir el archivo');
+        } finally {
+            setUploadingRespuesta(false);
+        }
+    };
 
     const handleApprove = async (id: number) => {
         setLoadingId(id);
@@ -181,6 +214,78 @@ export default function CasesTable({ initialCases, userRole, totalPages: initial
                             <div><strong className="block text-slate-800">Estatus</strong> {selectedCase.estatus}</div>
                             <div className="col-span-2"><strong className="block text-slate-800">Dirección</strong> {selectedCase.direccion || 'N/A'}</div>
                             <div className="col-span-2"><strong className="block text-slate-800">Abogado Asignado</strong> {selectedCase.abogadoAsignado || 'N/A'}</div>
+
+                            {/* Sección de Documentos del Expediente */}
+                            <div className="col-span-2 border-t pt-4 mt-2">
+                                <h4 className="font-bold text-slate-800 mb-3 text-sm">Documentos del Expediente</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Soporte Estudiante */}
+                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between gap-3">
+                                        <div>
+                                            <strong className="block text-slate-800 text-xs font-bold uppercase tracking-wider">Solicitud del Estudiante</strong>
+                                            <span className="text-xs text-slate-400">Escaneado por el departamento</span>
+                                        </div>
+                                        {selectedCase.soporteEstudiante ? (
+                                            <a
+                                                href={selectedCase.soporteEstudiante}
+                                                download
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold rounded-lg text-xs transition-colors w-fit border border-blue-100"
+                                            >
+                                                <FaDownload size={12} />
+                                                Descargar Solicitud
+                                            </a>
+                                        ) : (
+                                            <span className="text-xs text-slate-400 italic">Sin soporte adjunto</span>
+                                        )}
+                                    </div>
+
+                                    {/* Respuesta de la Solicitud */}
+                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between gap-3">
+                                        <div>
+                                            <strong className="block text-slate-800 text-xs font-bold uppercase tracking-wider">Respuesta Oficial</strong>
+                                            <span className="text-xs text-slate-400">Cargado por Administrador Master</span>
+                                        </div>
+                                        {selectedCase.respuestaSolicitud ? (
+                                            <a
+                                                href={selectedCase.respuestaSolicitud}
+                                                download
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-50 text-green-700 hover:bg-green-100 font-semibold rounded-lg text-xs transition-colors w-fit border border-green-100"
+                                            >
+                                                <FaDownload size={12} />
+                                                Descargar Respuesta
+                                            </a>
+                                        ) : (
+                                            <div>
+                                                {userRole === 'SUPER_ADMIN' ? (
+                                                    <div className="flex flex-col gap-2">
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,.jpg,.jpeg,.png"
+                                                            id="upload-respuesta-file"
+                                                            onChange={handleRespuestaUpload}
+                                                            disabled={uploadingRespuesta}
+                                                            className="hidden"
+                                                        />
+                                                        <label
+                                                            htmlFor="upload-respuesta-file"
+                                                            className="inline-flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 text-white hover:bg-slate-900 font-semibold rounded-lg text-xs transition-colors w-fit cursor-pointer disabled:opacity-50"
+                                                        >
+                                                            {uploadingRespuesta ? <FaSpinner className="animate-spin" /> : <FaUpload size={12} />}
+                                                            Subir Respuesta
+                                                        </label>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">En proceso de respuesta</span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div className="p-6 border-t border-slate-100 flex justify-end">
                             <button

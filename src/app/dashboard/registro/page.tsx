@@ -22,6 +22,7 @@ const InputGroup = ({ label, name, type = "text", placeholder, required = true, 
 
 export default function RegistroPage() {
     const [formData, setFormData] = useState<Record<string, string>>({});
+    const [soporteFile, setSoporteFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ success: boolean; numeroExpediente?: string } | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null);
@@ -48,11 +49,15 @@ export default function RegistroPage() {
             Object.entries(formData).forEach(([key, value]) => {
                 data.append(key, value);
             });
+            if (soporteFile) {
+                data.append('soporte', soporteFile);
+            }
 
             const response = await createExpediente(data);
             if (response.success) {
                 setResult(response);
                 setFormData({}); // Limpiar formulario
+                setSoporteFile(null); // Limpiar archivo
                 alert(`Caso registrado: ${response.numeroExpediente}`);
             }
         } catch (error) {
@@ -158,6 +163,27 @@ export default function RegistroPage() {
                             </select>
                         </div>
                     )}
+                </div>
+
+                {/* Sección 5: Documentos Adjuntos */}
+                <h2 className="text-lg font-semibold text-blue-600 mb-4 border-b pb-2">Documentos Adjuntos</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Solicitud Escaneada del Estudiante (PDF, JPG, PNG)</label>
+                        <input
+                            key={soporteFile ? 'has-file' : 'no-file'}
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    setSoporteFile(e.target.files[0]);
+                                } else {
+                                    setSoporteFile(null);
+                                }
+                            }}
+                            className="border border-slate-300 rounded-lg px-4 py-2 bg-white text-sm focus:ring-2 focus:ring-blue-500 outline-none file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                        />
+                    </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
