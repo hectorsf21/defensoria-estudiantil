@@ -21,10 +21,10 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
     ) : null;
 };
 
-const ChartCard = ({ title, data }: { title: string, data: any[] }) => {
+const ChartCard = ({ title, data, heightClass = "min-h-[350px]" }: { title: string, data: any[], heightClass?: string }) => {
     if (!data || data.length === 0) {
         return (
-            <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[350px]">
+            <div className={`bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col items-center justify-center ${heightClass}`}>
                 <h3 className="text-lg font-bold text-slate-700 mb-4">{title}</h3>
                 <p className="text-slate-400">No hay datos suficientes</p>
             </div>
@@ -32,7 +32,7 @@ const ChartCard = ({ title, data }: { title: string, data: any[] }) => {
     }
 
     return (
-        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow min-h-[350px] flex flex-col">
+        <div className={`bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex flex-col ${heightClass}`}>
             <h3 className="text-lg font-bold text-slate-700 mb-4 text-center border-b pb-2 border-slate-50">{title}</h3>
             <div className="flex-1 w-full relative min-h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -57,7 +57,7 @@ const ChartCard = ({ title, data }: { title: string, data: any[] }) => {
                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}
                             itemStyle={{ fontWeight: 'bold' }}
                         />
-                        <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                        <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: "20px" }} iconType="circle" />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
@@ -131,8 +131,8 @@ export default function EstadisticasPage() {
                 <ChartCard title="Estudiantes con Discapacidad" data={data.porDiscapacidad} />
                 
                 <div className="md:col-span-2 lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <ChartCard title="Tipos de Casos Frecuentes" data={data.porTipoCaso} />
-                    <ChartCard title="Incidencia por Programa Académico" data={data.porCarrera} />
+                    <ChartCard title="Tipos de Casos Frecuentes" data={data.porTipoCaso} heightClass="min-h-[480px]" />
+                    <ChartCard title="Incidencia por Programa Académico" data={data.porCarrera} heightClass="min-h-[480px]" />
                 </div>
             </div>
         </div>
