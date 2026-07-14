@@ -1,15 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { FaPlusCircle, FaSearch, FaSignOutAlt, FaHome, FaBars, FaTimes } from 'react-icons/fa';
+import { FaPlusCircle, FaSearch, FaSignOutAlt, FaHome, FaBars, FaTimes, FaChartPie } from 'react-icons/fa';
 import { logout } from '@/app/login/actions';
+import { getUserRole } from '@/app/dashboard/actions';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchRole = async () => {
+            const role = await getUserRole();
+            setUserRole(role);
+        };
+        fetchRole();
+    }, []);
 
     const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
     const closeSidebar = () => setIsSidebarOpen(false);
@@ -19,6 +29,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         { name: 'Registrar Caso', href: '/dashboard/registro', icon: <FaPlusCircle /> },
         { name: 'Buscar Casos', href: '/dashboard/busqueda', icon: <FaSearch /> },
     ];
+
+    if (userRole === 'SUPER_ADMIN') {
+        menuItems.push({ name: 'Estadísticas', href: '/dashboard/estadisticas', icon: <FaChartPie /> });
+    }
 
     return (
         <div className="flex h-screen bg-slate-50 overflow-hidden">

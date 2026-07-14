@@ -1,7 +1,9 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { FaSave, FaCheckCircle, FaSpinner } from 'react-icons/fa';
 import { createExpediente, getUserRole } from '../actions';
+import { estados } from '@/data/estado';
+import { datosAcademicos } from '@/data/datosAcademicos';
 
 // --- EL COMPONENTE SE DEFINE AQUÍ AFUERA ---
 // Esto evita que el input pierda el foco al escribir
@@ -35,8 +37,32 @@ export default function RegistroPage() {
         fetchRole();
     }, []);
 
+    const todasLasCarreras = useMemo(() => {
+        const carreras = new Set<string>();
+        const roles = Object.values(datosAcademicos.areasPorRol);
+        roles.forEach(rol => {
+            rol.areas.forEach(area => {
+                area.programas.forEach(prog => carreras.add(prog));
+            });
+        });
+        return Array.from(carreras).sort();
+    }, []);
+
+    const selectedEstado = useMemo(() => estados.find(e => e.nombre === formData['estado']), [formData['estado']]);
+    const selectedMunicipio = useMemo(() => selectedEstado?.municipios.find(m => m.nombre === formData['municipio']), [formData['municipio'], selectedEstado]);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => {
+            const newData = { ...prev, [name]: value };
+            if (name === 'estado') {
+                newData['municipio'] = '';
+                newData['parroquia'] = '';
+            } else if (name === 'municipio') {
+                newData['parroquia'] = '';
+            }
+            return newData;
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -94,8 +120,22 @@ export default function RegistroPage() {
                     <InputGroup label="Nombres" name="nombres" placeholder="Ej. Juan Andrés" value={formData['nombres'] || ''} onChange={handleChange} />
                     <InputGroup label="Apellidos" name="apellidos" placeholder="Ej. Pérez López" value={formData['apellidos'] || ''} onChange={handleChange} />
                     <InputGroup label="Cédula" name="cedula" type="number" placeholder="Ej. 12345678" value={formData['cedula'] || ''} onChange={handleChange} />
-                    <InputGroup label="Sexo" name="sexo" placeholder="F / M" value={formData['sexo'] || ''} onChange={handleChange} />
-                    <InputGroup label="Discapacidad" name="discapacidad" placeholder="Si / No" value={formData['discapacidad'] || ''} onChange={handleChange} />
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Sexo</label>
+                        <select name="sexo" value={formData['sexo'] || ''} onChange={handleChange} required className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white">
+                            <option value="">Seleccione...</option>
+                            <option value="Femenino">Femenino</option>
+                            <option value="Masculino">Masculino</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Discapacidad</label>
+                        <select name="discapacidad" value={formData['discapacidad'] || ''} onChange={handleChange} required className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white">
+                            <option value="">Seleccione...</option>
+                            <option value="No">No</option>
+                            <option value="Sí">Sí</option>
+                        </select>
+                    </div>
                     <InputGroup label="Teléfono" name="telefono" type="tel" placeholder="0412-0000000" value={formData['telefono'] || ''} onChange={handleChange} />
                     <InputGroup label="Correo Electrónico" name="correo" type="email" placeholder="estudiante@correo.com" value={formData['correo'] || ''} onChange={handleChange} />
                 </div>
@@ -103,7 +143,13 @@ export default function RegistroPage() {
                 {/* Sección 2: Datos Académicos */}
                 <h2 className="text-lg font-semibold text-blue-600 mb-4 border-b pb-2">Información Académica</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <InputGroup label="Programa / Carrera" name="carrera" placeholder="Ej. Ingeniería" value={formData['carrera'] || ''} onChange={handleChange} />
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Programa / Carrera</label>
+                        <select name="carrera" value={formData['carrera'] || ''} onChange={handleChange} required className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white">
+                            <option value="">Seleccione...</option>
+                            {todasLasCarreras.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
                     <InputGroup label="Año / Semestre" name="semestre" placeholder="Ej. 5to Semestre" value={formData['semestre'] || ''} onChange={handleChange} />
                     <InputGroup label="Sección" name="seccion" placeholder="Ej. A-01" value={formData['seccion'] || ''} onChange={handleChange} />
                     <InputGroup label="Periodo Académico" name="periodo" placeholder="Ej. 2024-I" value={formData['periodo'] || ''} onChange={handleChange} />
@@ -112,9 +158,27 @@ export default function RegistroPage() {
                 {/* Sección 3: Ubicación */}
                 <h2 className="text-lg font-semibold text-blue-600 mb-4 border-b pb-2">Ubicación</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <InputGroup label="Estado" name="estado" placeholder="Estado de procedencia" value={formData['estado'] || ''} onChange={handleChange} />
-                    <InputGroup label="Municipio" name="municipio" placeholder="Municipio" value={formData['municipio'] || ''} onChange={handleChange} />
-                    <InputGroup label="Parroquia" name="parroquia" placeholder="Parroquia" value={formData['parroquia'] || ''} onChange={handleChange} />
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Estado</label>
+                        <select name="estado" value={formData['estado'] || ''} onChange={handleChange} required className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white">
+                            <option value="">Seleccione...</option>
+                            {estados.map(e => <option key={e.nombre} value={e.nombre}>{e.nombre}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Municipio</label>
+                        <select name="municipio" value={formData['municipio'] || ''} onChange={handleChange} required disabled={!selectedEstado} className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white disabled:bg-slate-100">
+                            <option value="">Seleccione...</option>
+                            {selectedEstado?.municipios.map(m => <option key={m.nombre} value={m.nombre}>{m.nombre}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-xs font-bold text-slate-500 uppercase mb-1">Parroquia</label>
+                        <select name="parroquia" value={formData['parroquia'] || ''} onChange={handleChange} required disabled={!selectedMunicipio} className="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm bg-white disabled:bg-slate-100">
+                            <option value="">Seleccione...</option>
+                            {selectedMunicipio?.parroquias.map(p => <option key={p.nombre} value={p.nombre}>{p.nombre}</option>)}
+                        </select>
+                    </div>
                     <div className="md:col-span-3">
                         <InputGroup label="Dirección Habitacional" name="direccion" placeholder="Dirección completa" value={formData['direccion'] || ''} onChange={handleChange} />
                     </div>

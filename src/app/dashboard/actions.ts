@@ -185,3 +185,41 @@ export async function uploadRespuestaSolicitud(expedienteId: number, data: FormD
         return { error: 'Error al procesar el archivo de respuesta' };
     }
 }
+
+export async function getEstadisticas() {
+    const session = await getSession();
+    if (session?.role !== 'SUPER_ADMIN') {
+        throw new Error('Unauthorized');
+    }
+
+    const [porSexo, porDiscapacidad, porCarrera, porTipoCaso, porEstatus] = await Promise.all([
+        prisma.expediente.groupBy({
+            by: ['sexo'],
+            _count: { sexo: true }
+        }),
+        prisma.expediente.groupBy({
+            by: ['discapacidad'],
+            _count: { discapacidad: true }
+        }),
+        prisma.expediente.groupBy({
+            by: ['carrera'],
+            _count: { carrera: true }
+        }),
+        prisma.expediente.groupBy({
+            by: ['tipoCaso'],
+            _count: { tipoCaso: true }
+        }),
+        prisma.expediente.groupBy({
+            by: ['estatus'],
+            _count: { estatus: true }
+        })
+    ]);
+
+    return {
+        porSexo: porSexo.map(s => ({ name: s.sexo || 'No especificado', value: s._count.sexo })),
+        porDiscapacidad: porDiscapacidad.map(s => ({ name: s.discapacidad || 'No especificado', value: s._count.discapacidad })),
+        porCarrera: porCarrera.map(s => ({ name: s.carrera || 'No especificado', value: s._count.carrera })),
+        porTipoCaso: porTipoCaso.map(s => ({ name: s.tipoCaso || 'No especificado', value: s._count.tipoCaso })),
+        porEstatus: porEstatus.map(s => ({ name: s.estatus || 'No especificado', value: s._count.estatus }))
+    };
+}
